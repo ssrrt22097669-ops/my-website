@@ -1,49 +1,71 @@
 document.getElementById('registrationForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
+    // Очистка предыдущих сообщений
     clearErrors();
     document.getElementById('resultMessage').textContent = '';
 
-    const data = {
-        name: document.getElementById('name').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        password: document.getElementById('password').value,
-        confirmPassword: document.getElementById('confirmPassword').value,
-    };
+    // Получение значений полей
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const confirmPassword = document.getElementById('confirmPassword').value.trim();
 
-    // Локальная проверка перед отправкой (можно оставить или убрать)
-    let isValidLocal = true;
-    if (data.name === '') { showError('nameError', 'Пожалуйста, введите имя.'); isValidLocal = false; }
-    if (data.email === '') { showError('emailError', 'Пожалуйста, введите email.'); isValidLocal = false; }
-    else if (!validateEmail(data.email)) { showError('emailError', 'Некорректный формат email.'); isValidLocal = false; }
-    if (data.password.length < 8) { showError('passwordError', 'Пароль должен быть не менее 8 символов.'); isValidLocal = false; }
-    if (data.confirmPassword !== data.password) { showError('confirmPasswordError', 'Пароли не совпадают.'); isValidLocal = false; }
+    let isValid = true;
 
-    if (!isValidLocal) return;
+    // Валидация имени
+    if (name === '') {
+        showError('nameError', 'Пожалуйста, введите имя.');
+        isValid = false;
+    }
 
-    // Отправка данных на сервер
-    fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-    })
-      .then(res => res.json())
-      .then(result => {
-          if (result.success) {
-              document.getElementById('resultMessage').textContent = result.message;
-              document.getElementById('resultMessage').style.color = 'green';
-              document.getElementById('registrationForm').reset();
-          } else {
-              // Обработка ошибок с сервера
-              for (const key in result.errors) {
-                  showError(`${key}Error`, result.errors[key]);
-              }
-              document.getElementById('resultMessage').textContent = 'Ошибка при регистрации.';
-              document.getElementById('resultMessage').style.color = 'red';
-          }
-      })
-      .catch(() => {
-          document.getElementById('resultMessage').textContent = 'Ошибка соединения с сервером.';
-          document.getElementById('resultMessage').style.color = 'red';
-      });
+    // Валидация email
+    if (email === '') {
+        showError('emailError', 'Пожалуйста, введите email.');
+        isValid = false;
+    } else if (!validateEmail(email)) {
+        showError('emailError', 'Некорректный формат email.');
+        isValid = false;
+    }
+
+    // Валидация пароля
+    if (password.length < 8) {
+        showError('passwordError', 'Пароль должен быть не менее 8 символов.');
+        isValid = false;
+    }
+
+    // Валидация подтверждения пароля
+    if (confirmPassword !== password) {
+        showError('confirmPasswordError', 'Пароли не совпадают.');
+        isValid = false;
+   }
+
+   // Если все валидно - показываем сообщение об успехе
+   if (isValid) {
+       document.getElementById('resultMessage').textContent = 'Регистрация прошла успешно!';
+       document.getElementById('resultMessage').style.color = 'green';
+
+       // Можно добавить логику отправки данных на сервер или сброс формы
+       // например:
+       // document.getElementById('registrationForm').reset();
+   }
 });
+
+// Функция для отображения ошибок
+function showError(elementId, message) {
+   document.getElementById(elementId).textContent = message;
+}
+
+// Очистка сообщений об ошибках
+function clearErrors() {
+   const errorElements = document.querySelectorAll('.error-message');
+   errorElements.forEach(function(el) {
+       el.textContent = '';
+   });
+}
+
+// Простая проверка email с помощью регулярного выражения
+function validateEmail(email) {
+   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+   return re.test(email);
+}
